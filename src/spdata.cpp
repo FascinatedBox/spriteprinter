@@ -149,5 +149,6 @@ void spdata_generate_to_path(SPData *d, const char *path) {
     }
   }
 
+  fputs("}\n", f);
   fclose(f);
 }
