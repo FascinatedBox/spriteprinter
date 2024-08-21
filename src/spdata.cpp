@@ -106,6 +106,8 @@ void spdata_generate_to_path(SPData *d, const char *path) {
   int cu_z = d->cube_z;
   int height = d->height;
   int width = d->width;
+  int max_depth = d->spot_height_list.size() - 1;
+  double half_depth = cu_z * 0.5;
 
   FILE *f = fopen(path, "w");
 
@@ -125,27 +127,28 @@ void spdata_generate_to_path(SPData *d, const char *path) {
       // How high is that color?
       int z_repeat = d->spot_height_list[spot];
 
-      // Todo: Ideally, write the stl out directly.
-      // For the time being, this writes out vrml (I know), and another
-      // tool converts vrml to stl.
-      // The vrml converter appears to be confused by cubes of different
-      // Z depth, so I am instead dumping Z count cubes to work around
-      // that.
+      // Translating Z as 0 across the board results in centering each cube
+      // along the Z axis. The result is that the image is mirrored along Z,
+      // which is VERY odd.
 
-      for (int z = 0; z < z_repeat; z++) {
-        int layer_z = cu_z * z;
+      // Translating Z as 0 results in the image being mirroed across the Z axis
+      // because each cube centers along Z. The smaller the cube, the more it
+      // has to move to center itself.
+      double offset = (max_depth - z_repeat) * half_depth;
 
-        fputs("Transform {\n", f);
-        fprintf(f, "  translation %d %d %d\n", global_y, global_x, layer_z);
-        fputs("  children [\n", f);
-        fputs("    Shape {\n", f);
-        fputs("        geometry Box {\n", f);
-        fprintf(f, "            size %d %d %d\n", cu_x, cu_y, cu_z);
-        fputs("        }\n", f);
-        fputs("    }\n", f);
-        fputs("  ]\n", f);
-        fputs("}\n", f);
-      }
+      // Depth for pixel.
+      int pixel_z = z_repeat * cu_z;
+
+      fputs("Transform {\n", f);
+      fprintf(f, "  translation %d %d %.2f\n", global_y, global_x, offset);
+      fputs("  children [\n", f);
+      fputs("    Shape {\n", f);
+      fputs("        geometry Box {\n", f);
+      fprintf(f, "            size %d %d %d\n", cu_x, cu_y, pixel_z);
+      fputs("        }\n", f);
+      fputs("    }\n", f);
+      fputs("  ]\n", f);
+      fputs("}\n", f);
     }
   }
 
