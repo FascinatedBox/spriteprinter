@@ -140,7 +140,7 @@ void spdata_generate_to_path(SPData *d, const char *path) {
       int pixel_z = z_repeat * cu_z;
 
       fputs("Transform {\n", f);
-      fprintf(f, "  translation %d %d %.2f\n", global_y, global_x, offset);
+      fprintf(f, "  translation %d %d -%.2f\n", global_y, global_x, offset);
       fputs("  children [\n", f);
       fputs("    Shape {\n", f);
       fputs("        geometry Box {\n", f);
