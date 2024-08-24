@@ -5,7 +5,7 @@ include(FindPkgConfig)
 find_package(PNG REQUIRED)
 
 if(WITH_DEBUG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -g3 -O0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0")
 endif()
 
 add_executable(
