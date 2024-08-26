@@ -99,59 +99,106 @@ void spdata_write_spots_for_pixel(SPData *d) {
   putc('\n', stdout);
 }
 
+#define TRIANGLE(a, b, c, d, e, f, g, h, i)                                    \
+  *co = a;                                                                     \
+  co++;                                                                        \
+  *co = b;                                                                     \
+  co++;                                                                        \
+  *co = c;                                                                     \
+  co++;                                                                        \
+  *co = d;                                                                     \
+  co++;                                                                        \
+  *co = e;                                                                     \
+  co++;                                                                        \
+  *co = f;                                                                     \
+  co++;                                                                        \
+  *co = g;                                                                     \
+  co++;                                                                        \
+  *co = h;                                                                     \
+  co++;                                                                        \
+  *co = i;                                                                     \
+  co++;                                                                        \
+  co = co_start;                                                               \
+  write_coords(out_f, co)
+
+static void write_coords(FILE *f, float *coords) {
+  float *co = coords;
+  fprintf(f,
+          R"( facet normal 0 0 0
+  outer loop
+   vertex %g %g %g
+   vertex %g %g %g
+   vertex %g %g %g
+  endloop
+ endfacet
+)",
+          co[0], co[1], co[2], co[3], co[4], co[5], co[6], co[7], co[8]);
+}
+
+static void write_cube(SPData *d, FILE *out_f, int glo_x, int glo_y,
+                       int glo_z) {
+  float co_start[9] = {};
+  float *co = co_start;
+  float tr_x = d->cube_x + glo_x;
+  float tr_y = d->cube_y + glo_y;
+  float tr_z = d->cube_z + glo_z;
+  float neg_x = (-d->cube_x) + glo_x;
+  float neg_y = (-d->cube_y) + glo_y;
+  float neg_z = (-d->cube_z) + glo_z;
+
+  // A cube requires a total of 108 points:
+  // 1 cube =
+  //  6 sides
+  //   12 triangles
+  //   * 3 points
+  //   * 3 (each point has x, y, z)
+  // = 108
+
+  TRIANGLE(tr_x, tr_y, tr_z, neg_x, tr_y, tr_z, neg_x, neg_y, tr_z);
+  TRIANGLE(tr_x, tr_y, tr_z, neg_x, neg_y, tr_z, tr_x, neg_y, tr_z);
+  TRIANGLE(neg_x, neg_y, neg_z, neg_x, tr_y, neg_z, tr_x, tr_y, neg_z);
+  TRIANGLE(tr_x, neg_y, neg_z, neg_x, neg_y, neg_z, tr_x, tr_y, neg_z);
+  TRIANGLE(tr_x, tr_y, tr_z, tr_x, tr_y, neg_z, neg_x, tr_y, neg_z);
+  TRIANGLE(tr_x, tr_y, tr_z, neg_x, tr_y, neg_z, neg_x, tr_y, tr_z);
+  TRIANGLE(tr_x, neg_y, tr_z, neg_x, neg_y, tr_z, neg_x, neg_y, neg_z);
+  TRIANGLE(tr_x, neg_y, tr_z, neg_x, neg_y, neg_z, tr_x, neg_y, neg_z);
+  TRIANGLE(tr_x, tr_y, tr_z, tr_x, neg_y, tr_z, tr_x, neg_y, neg_z);
+  TRIANGLE(tr_x, tr_y, tr_z, tr_x, neg_y, neg_z, tr_x, tr_y, neg_z);
+  TRIANGLE(neg_x, tr_y, tr_z, neg_x, tr_y, neg_z, neg_x, neg_y, neg_z);
+  TRIANGLE(neg_x, tr_y, tr_z, neg_x, neg_y, neg_z, neg_x, neg_y, tr_z);
+}
+
 void spdata_generate_to_path(SPData *d, const char *path) {
-  (void)path;
-  int cu_x = d->cube_x;
-  int cu_y = d->cube_y;
-  int cu_z = d->cube_z;
+  float cu_x = d->cube_x;
+  float cu_y = d->cube_y;
+  float cu_z = d->cube_z;
   int height = d->height;
   int width = d->width;
-  int max_depth = d->spot_height_list.size() - 1;
-  double half_depth = cu_z * 0.5;
+  int layer_count = d->spot_height_list.size();
+  float half_depth = cu_z * 0.5;
 
   FILE *f = fopen(path, "w");
+  fputs("solid SpritePrinterImage\n", f);
 
-  fputs("#VRML V2.0 utf\n", f);
-  fputs("Shape {\n", f);
+  for (int layer = 0; layer < layer_count; layer++) {
+    float glo_z = layer * cu_z * 2;
 
-  for (int y = 0; y < height; y++) {
-    std::vector<int> row = d->spot_for_pixel[y];
-    for (int x = 0; x < width; x++) {
-      // Global position for the pixel.
-      int global_y = y * cu_y;
-      int global_x = x * cu_x;
+    for (int y = 0; y < height; y++) {
+      float glo_y = y * cu_y * 2;
+      std::vector<int> row = d->spot_for_pixel[y];
 
-      // What color is at this pixel?
-      int spot = d->spot_for_pixel[y][x];
+      for (int x = 0; x < width; x++) {
+        int pixel_z = row[x];
 
-      // How high is that color?
-      int z_repeat = d->spot_height_list[spot];
+        if (pixel_z < layer)
+          continue;
 
-      // Translating Z as 0 across the board results in centering each cube
-      // along the Z axis. The result is that the image is mirrored along Z,
-      // which is VERY odd.
-
-      // Translating Z as 0 results in the image being mirroed across the Z axis
-      // because each cube centers along Z. The smaller the cube, the more it
-      // has to move to center itself.
-      double offset = (max_depth - z_repeat) * half_depth;
-
-      // Depth for pixel.
-      int pixel_z = z_repeat * cu_z;
-
-      fputs("Transform {\n", f);
-      fprintf(f, "  translation %d %d -%.2f\n", global_y, global_x, offset);
-      fputs("  children [\n", f);
-      fputs("    Shape {\n", f);
-      fputs("        geometry Box {\n", f);
-      fprintf(f, "            size %d %d %d\n", cu_x, cu_y, pixel_z);
-      fputs("        }\n", f);
-      fputs("    }\n", f);
-      fputs("  ]\n", f);
-      fputs("}\n", f);
+        float glo_x = x * cu_x * 2;
+        write_cube(d, f, glo_x, glo_y, glo_z);
+      }
     }
   }
 
-  fputs("}\n", f);
+  fputs("endsolid\n", f);
   fclose(f);
 }
