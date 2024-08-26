@@ -135,8 +135,14 @@ static void write_coords(FILE *f, float *coords) {
           co[0], co[1], co[2], co[3], co[4], co[5], co[6], co[7], co[8]);
 }
 
+#define F_TOP   0x01
+#define F_NORTH 0x02
+#define F_EAST  0x04
+#define F_SOUTH 0x08
+#define F_WEST  0x10
+
 static void write_cube(SPData *d, FILE *out_f, int glo_x, int glo_y,
-                       int glo_z) {
+                       int glo_z, int flags) {
   float co_start[9] = {};
   float *co = co_start;
   float tr_x = d->cube_x + glo_x;
@@ -153,17 +159,29 @@ static void write_cube(SPData *d, FILE *out_f, int glo_x, int glo_y,
   //   * 3 points
   //   * 3 (each point has x, y, z)
   // = 108
+  // Each pair of triangles corresponds to a different side of the cube.
 
+  // Top
   TRIANGLE(tr_x, tr_y, tr_z, neg_x, tr_y, tr_z, neg_x, neg_y, tr_z);
   TRIANGLE(tr_x, tr_y, tr_z, neg_x, neg_y, tr_z, tr_x, neg_y, tr_z);
+
+  // Bottom
   TRIANGLE(neg_x, neg_y, neg_z, neg_x, tr_y, neg_z, tr_x, tr_y, neg_z);
   TRIANGLE(tr_x, neg_y, neg_z, neg_x, neg_y, neg_z, tr_x, tr_y, neg_z);
+
+  // North
   TRIANGLE(tr_x, tr_y, tr_z, tr_x, tr_y, neg_z, neg_x, tr_y, neg_z);
   TRIANGLE(tr_x, tr_y, tr_z, neg_x, tr_y, neg_z, neg_x, tr_y, tr_z);
+
+  // South
   TRIANGLE(tr_x, neg_y, tr_z, neg_x, neg_y, tr_z, neg_x, neg_y, neg_z);
   TRIANGLE(tr_x, neg_y, tr_z, neg_x, neg_y, neg_z, tr_x, neg_y, neg_z);
+
+  // East
   TRIANGLE(tr_x, tr_y, tr_z, tr_x, neg_y, tr_z, tr_x, neg_y, neg_z);
   TRIANGLE(tr_x, tr_y, tr_z, tr_x, neg_y, neg_z, tr_x, tr_y, neg_z);
+
+  // West
   TRIANGLE(neg_x, tr_y, tr_z, neg_x, tr_y, neg_z, neg_x, neg_y, neg_z);
   TRIANGLE(neg_x, tr_y, tr_z, neg_x, neg_y, neg_z, neg_x, neg_y, tr_z);
 }
@@ -175,7 +193,6 @@ void spdata_generate_to_path(SPData *d, const char *path) {
   int height = d->height;
   int width = d->width;
   int layer_count = d->spot_height_list.size();
-  float half_depth = cu_z * 0.5;
 
   FILE *f = fopen(path, "w");
   fputs("solid SpritePrinterImage\n", f);
@@ -189,12 +206,13 @@ void spdata_generate_to_path(SPData *d, const char *path) {
 
       for (int x = 0; x < width; x++) {
         int pixel_z = row[x];
+        int flags = F_NORTH | F_EAST | F_SOUTH | F_WEST | F_TOP;
 
         if (pixel_z < layer)
           continue;
 
         float glo_x = x * cu_x * 2;
-        write_cube(d, f, glo_x, glo_y, glo_z);
+        write_cube(d, f, glo_x, glo_y, glo_z, flags);
       }
     }
   }
