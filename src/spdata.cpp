@@ -166,8 +166,10 @@ static void write_cube(SPData *d, FILE *out_f, int glo_x, int glo_y,
   TRIANGLE(tr_x, tr_y, tr_z, neg_x, neg_y, tr_z, tr_x, neg_y, tr_z);
 
   // Bottom
-  TRIANGLE(neg_x, neg_y, neg_z, neg_x, tr_y, neg_z, tr_x, tr_y, neg_z);
-  TRIANGLE(tr_x, neg_y, neg_z, neg_x, neg_y, neg_z, tr_x, tr_y, neg_z);
+  if (glo_z == 0) {
+    TRIANGLE(neg_x, neg_y, neg_z, neg_x, tr_y, neg_z, tr_x, tr_y, neg_z);
+    TRIANGLE(tr_x, neg_y, neg_z, neg_x, neg_y, neg_z, tr_x, tr_y, neg_z);
+  }
 
   // North
   TRIANGLE(tr_x, tr_y, tr_z, tr_x, tr_y, neg_z, neg_x, tr_y, neg_z);
