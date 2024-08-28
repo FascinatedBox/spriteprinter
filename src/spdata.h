@@ -18,7 +18,6 @@ struct SPData {
 
 SPData *spdata_new_from_png_path(const char *path);
 void spdata_set_cube_xyz(SPData *data, int x, int y, int z);
-void spdata_write_spots_for_pixel(SPData *data);
 void spdata_generate_to_path(SPData *data, const char *path);
 
 #endif

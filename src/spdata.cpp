@@ -87,18 +87,6 @@ void spdata_set_cube_xyz(SPData *d, int x, int y, int z) {
   d->cube_z = z;
 }
 
-void spdata_write_spots_for_pixel(SPData *d) {
-  for (int y = 0; y < d->height; y++) {
-    for (int x = 0; x < d->width - 1; x++) {
-      printf("%d ", d->spot_for_pixel[y][x]);
-    }
-
-    printf("%d\n", d->spot_for_pixel[y][d->width - 1]);
-  }
-
-  putc('\n', stdout);
-}
-
 #define TRIANGLE(a, b, c, d, e, f, g, h, i)                                    \
   *co = a;                                                                     \
   co++;                                                                        \
