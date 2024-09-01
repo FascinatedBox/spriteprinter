@@ -106,7 +106,8 @@ void spdata_write_os_to_path(SPData *d, const char *path) {
 cu_y = %d;
 cu_z = %d;
 
-)", d->cube_x, d->cube_y, d->cube_z);
+)",
+          d->cube_x, d->cube_y, d->cube_z);
 
   fputs(R"(for (y = [0:len(heightmap)-1]) {
     line = heightmap[y];
@@ -116,7 +117,8 @@ cu_z = %d;
             cube([cu_x, cu_y, spot * cu_z]);
     }
 }
-)", f);
+)",
+        f);
 
   fclose(f);
 }
