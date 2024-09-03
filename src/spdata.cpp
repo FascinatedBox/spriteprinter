@@ -122,3 +122,10 @@ cu_z = %d;
 
   fclose(f);
 }
+
+void spdata_delete(SPData *d) {
+  if (d == nullptr)
+    return;
+
+  delete d;
+}
