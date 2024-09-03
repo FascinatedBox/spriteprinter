@@ -128,15 +128,17 @@ cu_z = %d;
 )",
           d->cube_x, d->cube_y, d->cube_z);
 
+  // Both loops move in reverse to prevent image mirroring in X + Y.
   fputs(R"(for (y = [0:len(table)-1]) {
+    render_y = len(table) - y;
     line = table[y];
 
-    for (x = [0:3:len(line)-1]) {
-        x_start = line[x];
-        z_height = line[x+1];
-        x_wide = line[x+2];
+    for (x = [len(line)-1:-3:0]) {
+        x_start = line[x-2];
+        z_height = line[x-1];
+        x_wide = line[x];
 
-        translate([x_start * cu_x, y * cu_y, 0])
+        translate([x_start * cu_x, render_y * cu_y, 0])
             cube([x_wide, cu_y, z_height * cu_z]);
     }
 }
