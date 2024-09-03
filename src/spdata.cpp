@@ -90,15 +90,34 @@ void spdata_set_cube_xyz(SPData *d, int x, int y, int z) {
 
 void spdata_write_os_to_path(SPData *d, const char *path) {
   FILE *f = fopen(path, "w");
-  fputs("heightmap = [\n", f);
+  fputs("table = [\n", f);
 
+  // Simple algorithm for rebuilding the image line by line.
+  // 1 image line = 1 table line, so encoding doesn't need y.
+  // Don't dump cubes: OpenSCAD has to think more.
+  // Instead, dump lines of equivalent Z depth.
+  // Each entry is a triple: starting x, cube height, width.
+  // OpenSCAD has referential transparency (no 'start_x += width').
   for (int y = 0; y < d->height; y++) {
     fputs("  [", f);
-    for (int x = 0; x < d->width - 1; x++) {
-      fprintf(f, "%d,", d->spot_for_pixel[y][x]);
+    int last_height = d->spot_for_pixel[y][0];
+    int x_start = 0;
+    int x = 0;
+
+    for (x = 1; x < d->width; x++) {
+      int spot = d->spot_for_pixel[y][x];
+
+      if (last_height == -1)
+        last_height = spot;
+      else if (last_height != spot) {
+        fprintf(f, "%d,%d,%d, ", x_start, last_height, x - x_start);
+
+        last_height = spot;
+        x_start = x;
+      }
     }
 
-    fprintf(f, "%d],\n", d->spot_for_pixel[y][d->width - 1]);
+    fprintf(f, "%d,%d,%d],\n", x_start, last_height, x - x_start);
   }
 
   fputs("];\n\n", f);
@@ -109,12 +128,16 @@ cu_z = %d;
 )",
           d->cube_x, d->cube_y, d->cube_z);
 
-  fputs(R"(for (y = [0:len(heightmap)-1]) {
-    line = heightmap[y];
-    for (x = [0:len(line)-1]) {
-        spot = line[x];
-        translate([x * cu_x, y * cu_y, 0])
-            cube([cu_x, cu_y, spot * cu_z]);
+  fputs(R"(for (y = [0:len(table)-1]) {
+    line = table[y];
+
+    for (x = [0:3:len(line)-1]) {
+        x_start = line[x];
+        z_height = line[x+1];
+        x_wide = line[x+2];
+
+        translate([x_start * cu_x, y * cu_y, 0])
+            cube([x_wide, cu_y, z_height * cu_z]);
     }
 }
 )",
