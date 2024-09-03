@@ -8,7 +8,8 @@
 struct SPData {
   std::vector<std::vector<int>> spot_for_pixel;
   std::map<int, int> spot_map;
-  std::vector<int> spot_height_list;
+  std::map<int, int> spot_counter_map;
+  std::vector<int> height_table;
   int height;
   int width;
   int cube_x;

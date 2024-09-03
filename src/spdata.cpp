@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -7,7 +8,8 @@ static SPData *init_data(int height, int width) {
   SPData *d = new SPData();
 
   d->spot_map = std::map<int, int>();
-  d->spot_height_list = std::vector<int>();
+  d->spot_counter_map = std::map<int, int>();
+  d->height_table = std::vector<int>();
   d->height = height;
   d->width = width;
   d->spot_for_pixel.reserve(d->height);
@@ -24,19 +26,50 @@ static int spot_for_color(SPData *d, unsigned int color) {
   auto search = d->spot_map.find(color);
   int result;
 
-  if (search != d->spot_map.end())
+  if (search != d->spot_map.end()) {
+    d->spot_counter_map[color]++;
     result = search->second;
-  else {
+  } else {
     result = d->spot_map.size();
     d->spot_map[color] = result;
+    d->spot_counter_map[color] = 1;
   }
 
   return result;
 }
 
-static void init_spot_height_list(SPData *d) {
+static void init_height_table(SPData *d) {
+  std::vector<std::pair<int, int>> table = std::vector<std::pair<int, int>>();
+
+  int total = 0;
+
+  // Create a list of [spot id, frequency].
+  for (auto it = d->spot_map.begin(); it != d->spot_map.end(); it++) {
+    auto color_key = it->first;
+    auto color_idx = it->second;
+    auto count = d->spot_counter_map[color_key];
+
+    table.push_back(std::make_pair(color_idx, count));
+  }
+
+  // Assume the top left pixel is the color of the background and make sure it
+  // goes below all others.
+  table[0].second = 0;
+
+  std::sort(table.begin(), table.end(),
+            [](std::pair<int, int> a, std::pair<int, int> b) {
+              return a.second > b.second;
+            });
+
   for (int i = 0; i < d->spot_map.size(); i++) {
-    d->spot_height_list.push_back(i);
+    d->height_table.push_back(0);
+  }
+
+  // Build translation from original spot -> corrected id.
+  for (int i = 0; i < table.size(); i++) {
+    int color_idx = table[i].first;
+
+    d->height_table[color_idx] = i;
   }
 }
 
@@ -76,7 +109,7 @@ SPData *spdata_new_from_png_path(const char *path) {
     }
   }
 
-  init_spot_height_list(d);
+  init_height_table(d);
   png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
   fclose(fp);
   return d;
@@ -100,12 +133,12 @@ void spdata_write_os_to_path(SPData *d, const char *path) {
   // OpenSCAD has referential transparency (no 'start_x += width').
   for (int y = 0; y < d->height; y++) {
     fputs("  [", f);
-    int last_height = d->spot_for_pixel[y][0];
+    int last_height = d->height_table[d->spot_for_pixel[y][0]];
     int x_start = 0;
     int x = 0;
 
     for (x = 1; x < d->width; x++) {
-      int spot = d->spot_for_pixel[y][x];
+      int spot = d->height_table[d->spot_for_pixel[y][x]];
 
       if (last_height == -1)
         last_height = spot;
