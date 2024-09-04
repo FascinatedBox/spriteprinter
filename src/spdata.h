@@ -6,12 +6,23 @@
 #include <vector>
 
 struct SPData {
+  // [y][x] -> spot
   std::vector<std::vector<int>> spot_for_pixel;
+
+  // rgba color -> spot
   std::map<int, int> spot_map;
+
+  // spot -> frequency
   std::map<int, int> spot_counter_map;
+
+  // spot -> Z height
   std::vector<int> height_table;
+
+  // image dimensions
   int height;
   int width;
+
+  // base cube dimensions
   int cube_x;
   int cube_y;
   int cube_z;
