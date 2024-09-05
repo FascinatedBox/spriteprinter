@@ -15,8 +15,7 @@ static SPData *init_data(int height, int width) {
   d->spot_for_pixel.reserve(d->height);
   auto v = std::vector<std::vector<int>>(height, std::vector<int>());
   d->spot_for_pixel = v;
-  d->cube_x = 0;
-  d->cube_y = 0;
+  d->cube_xy = 0;
   d->cube_z = 0;
 
   return d;
@@ -115,9 +114,8 @@ SPData *spdata_new_from_png_path(const char *path) {
   return d;
 }
 
-void spdata_set_cube_xyz(SPData *d, int x, int y, int z) {
-  d->cube_x = x;
-  d->cube_y = y;
+void spdata_set_cube_xyz(SPData *d, int xy, int z) {
+  d->cube_xy = xy;
   d->cube_z = z;
 }
 
@@ -154,12 +152,11 @@ void spdata_write_os_to_path(SPData *d, const char *path) {
   }
 
   fputs("];\n\n", f);
-  fprintf(f, R"(cu_x = %d;
-cu_y = %d;
+  fprintf(f, R"(cu_xy = %d;
 cu_z = %d;
 
 )",
-          d->cube_x, d->cube_y, d->cube_z);
+          d->cube_xy, d->cube_z);
 
   // Both loops move in reverse to prevent image mirroring in X + Y.
   fputs(R"(for (y = [0:len(table)-1]) {
@@ -171,8 +168,8 @@ cu_z = %d;
         z_height = line[x-1];
         x_wide = line[x];
 
-        translate([x_start * cu_x, render_y * cu_y, 0])
-            cube([x_wide, cu_y, z_height * cu_z]);
+        translate([x_start * cu_xy, render_y * cu_xy, 0])
+            cube([x_wide, cu_xy, z_height * cu_z]);
     }
 }
 )",

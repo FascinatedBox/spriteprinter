@@ -23,13 +23,12 @@ struct SPData {
   int width;
 
   // base cube dimensions
-  int cube_x;
-  int cube_y;
+  int cube_xy;
   int cube_z;
 };
 
 SPData *spdata_new_from_png_path(const char *path);
-void spdata_set_cube_xyz(SPData *data, int x, int y, int z);
+void spdata_set_cube_xyz(SPData *data, int xy, int z);
 void spdata_write_os_to_path(SPData *data, const char *path);
 void spdata_delete(SPData *data);
 
