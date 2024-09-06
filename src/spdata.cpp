@@ -37,10 +37,20 @@ static int spot_for_color(SPData *d, unsigned int color) {
   return result;
 }
 
+static int get_first_color_spot(SPData *d)
+{
+  int color_key = d->spot_for_pixel[0][0];
+
+  return d->spot_map[color_key];
+}
+
 static void init_height_table(SPData *d) {
   std::vector<std::pair<int, int>> table = std::vector<std::pair<int, int>>();
-
+  int first_color_spot = get_first_color_spot(d);
   int total = 0;
+
+  // Assume the top left pixel has the background color.
+  d->spot_counter_map[first_color_spot] = 0;
 
   // Create a list of [spot id, frequency].
   for (auto it = d->spot_map.begin(); it != d->spot_map.end(); it++) {
@@ -48,12 +58,11 @@ static void init_height_table(SPData *d) {
     auto color_idx = it->second;
     auto count = d->spot_counter_map[color_key];
 
+    if (count == 0)
+      continue;
+
     table.push_back(std::make_pair(color_idx, count));
   }
-
-  // Assume the top left pixel is the color of the background and make sure it
-  // goes below all others.
-  table[0].second = 0;
 
   std::sort(table.begin(), table.end(),
             [](std::pair<int, int> a, std::pair<int, int> b) {
