@@ -150,14 +150,20 @@ void spdata_write_os_to_path(SPData *d, const char *path) {
       if (last_height == -1)
         last_height = spot;
       else if (last_height != spot) {
-        fprintf(f, "%d,%d,%d, ", x_start, last_height, x - x_start);
+        // Cubes with 0 height are invisible, don't bother.
+        if (last_height != 0)
+          fprintf(f, "%d,%d,%d, ", x_start, last_height, x - x_start);
 
         last_height = spot;
         x_start = x;
       }
     }
 
-    fprintf(f, "%d,%d,%d],\n", x_start, last_height, x - x_start);
+    // Same as above.
+    if (last_height != 0)
+      fprintf(f, "%d,%d,%d", x_start, last_height, x - x_start);
+
+    fputs("],\n", f);
   }
 
   fputs("];\n\n", f);
