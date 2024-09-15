@@ -184,7 +184,7 @@ cu_z = %d;
         x_wide = line[x];
 
         translate([x_start * cu_xy, render_y * cu_xy, 0])
-            cube([x_wide, cu_xy, z_height * cu_z]);
+            cube([x_wide * cu_xy, cu_xy, z_height * cu_z]);
     }
 }
 )",
