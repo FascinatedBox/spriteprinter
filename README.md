@@ -12,11 +12,16 @@ recommend you check the output against the original image to avoid misprints.
 
 ### Caveats
 
-* This program generates simplistic OpenSCAD files. They work, but they take a
-  hot minute. I'm open to patches that make the output better.
+* The color of the pixel at the very top left of the screen is treated as the
+  background color, and not included in the output.
 
-* The result is always a single stl file. If anyone is interested in having this
-  generate one stl file per layer, let me know.
+* Layers are organized by frequency: The most frequent color is at the bottom
+  layer, and the least frequent is at the top.
+
+### Usage
+
+Use the file menu to select a png to load. Once it's loaded, save the resulting
+scad. You will need to load the result in OpenSCAD.
 
 ### Questions
 

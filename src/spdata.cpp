@@ -37,8 +37,7 @@ static int spot_for_color(SPData *d, unsigned int color) {
   return result;
 }
 
-static int get_first_color_spot(SPData *d)
-{
+static int get_first_color_spot(SPData *d) {
   int color_key = d->spot_for_pixel[0][0];
 
   return d->spot_map[color_key];
