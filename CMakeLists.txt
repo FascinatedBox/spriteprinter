@@ -1,17 +1,16 @@
-project(spriteprinter)
 cmake_minimum_required(VERSION 3.5.0)
+project(spriteprinter)
 
 include(FindPkgConfig)
 find_package(PNG REQUIRED)
 find_package(
-    Qt5
+    Qt6
     COMPONENTS
         Widgets
     REQUIRED
 )
 
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
 set(MOCUIC_DIR ${CMAKE_CURRENT_BINARY_DIR}/.mocuic)
 
 if(WITH_DEBUG)
@@ -36,5 +35,5 @@ set_target_properties(
 target_link_libraries(
     spriteprinter
         png
-        Qt5::Widgets
+        Qt6::Widgets
 )
