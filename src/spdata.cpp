@@ -15,8 +15,8 @@ static SPData *init_data(int height, int width) {
   d->spot_for_pixel.reserve(d->height);
   auto v = std::vector<std::vector<int>>(height, std::vector<int>());
   d->spot_for_pixel = v;
-  d->cube_xy = 0;
-  d->cube_z = 0;
+  d->cube_xy = 1;
+  d->cube_z = 1;
 
   return d;
 }
